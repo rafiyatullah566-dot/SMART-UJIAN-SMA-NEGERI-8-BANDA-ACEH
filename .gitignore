@@ -1,0 +1,18 @@
+# Local configuration
+local.properties
+google-services.json
+
+# Build outputs
+.gradle/
+**/build/
+**/.gradle/
+
+# IDE
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+git status --short

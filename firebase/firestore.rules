@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+    function hasRole(role) {
+      return signedIn() && userDoc().data.role == role;
+    }
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || hasRole('admin') || hasRole('teacher'));
+      allow create: if false; // Buat profil melalui Admin SDK / callable function tepercaya.
+      allow update, delete: if false;
+    }
+    match /classes/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /subjects/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+    match /exams/{id} {
+      allow read: if signedIn();
+      allow write: if false; // Semua perubahan ujian lewat backend tepercaya.
+    }
+    match /questionBanks/{id} {
+      allow read, write: if false; // Backend memeriksa pemilik dan peran.
+    }
+    match /examAttempts/{id} {
+      allow read, write: if false; // Jawaban tidak boleh ditulis langsung oleh klien.
+    }
+    match /examResults/{id} {
+      allow read: if signedIn() && (
+        resource.data.studentId == request.auth.uid ||
+        hasRole('admin') || hasRole('teacher')
+      );
+      allow write: if false;
+    }
+    match /auditLogs/{id} {
+      allow read: if hasRole('admin');
+      allow write: if false;
+    }
+  }
+}
